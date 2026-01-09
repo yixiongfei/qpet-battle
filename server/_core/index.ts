@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { WebSocketManager } from "../websocket";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -50,6 +51,10 @@ async function startServer() {
     serveStatic(app);
   }
 
+  // 初始化 WebSocket 管理器
+  const wsManager = new WebSocketManager(server);
+  console.log('[WebSocket] Manager initialized');
+
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
 
@@ -59,6 +64,12 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+  });
+
+  // 优雅关闭
+  process.on('SIGTERM', () => {
+    wsManager.stopHeartbeat();
+    server.close();
   });
 }
 

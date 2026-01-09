@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import PetEvolution from "./pages/PetEvolution";
 import MultiplayerBattle from "./pages/MultiplayerBattle";
+import RealtimeBattle from "./pages/RealtimeBattle";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -15,6 +16,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/pet-evolution"} component={PetEvolution} />
       <Route path={"/multiplayer-battle"} component={MultiplayerBattle} />
+      <Route path={"/realtime-battle"} component={RealtimeBattle} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
