@@ -1,8 +1,14 @@
 <template>
   <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-4xl font-bold text-primary drop-shadow-md">Q宠大乐斗</h1>
-      <div class="text-muted-foreground">Level {{ player.level }}</div>
+      <div>
+        <h1 class="text-4xl font-bold text-primary drop-shadow-md">Q宠大乐斗</h1>
+        <div class="text-sm text-muted-foreground mt-1">欢迎回来，大侠！</div>
+      </div>
+      <div class="text-right">
+        <div class="text-muted-foreground">Level {{ player.level }}</div>
+        <div class="text-sm text-yellow-600 font-bold">{{ player.gold }} 💰</div>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -111,8 +117,11 @@
           </div>
         </div>
 
-        <!-- 战斗和商店入口 -->
-        <div class="flex justify-end gap-4 mt-8">
+        <!-- 战斗、商店和成就入口 -->
+        <div class="flex justify-end gap-4 mt-8 flex-wrap">
+          <button @click="router.push('/achievements')" class="pop-button text-xl px-6 py-4 bg-purple-500 hover:bg-purple-600 text-white shadow-lg transform hover:scale-105 transition-all">
+            成就与排行榜
+          </button>
           <button @click="router.push('/shop')" class="pop-button text-xl px-8 py-4 bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg transform hover:scale-105 transition-all">
             进入商店
           </button>

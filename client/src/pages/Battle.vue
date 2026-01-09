@@ -99,13 +99,15 @@
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
+import { useAchievementsStore } from '@/stores/achievements'
 import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const gameStore = useGameStore()
+const achievementsStore = useAchievementsStore()
 const { player } = storeToRefs(gameStore)
 
-const currentHp = ref(player.value.hp)
+const currentHp = ref(100)
 const enemyHp = ref(100)
 const isBattleStarted = ref(false)
 const isBattleEnded = ref(false)
@@ -123,6 +125,10 @@ const hasHealthPotion = computed(() => {
   return Object.values(player.value.potions).some(count => count > 0)
 })
 
+const getNewUnlockedAchievements = () => {
+  return achievementsStore.allAchievements.filter(a => a.unlocked && a.unlockedAt)
+}
+
 const useHealthPotion = () => {
   // 优先使用小红瓶
   const potions = ['p1', 'p2', 'p3']
@@ -131,6 +137,9 @@ const useHealthPotion = () => {
       const potion = gameStore.getShopPotions().find(p => p.id === potionId)
       currentHp.value = Math.min(player.value.maxHp, currentHp.value + (potion?.healAmount || 0))
       addLog('system', `使用了 ${potion?.name}，恢复了 ${potion?.healAmount} 点生命值！`)
+      
+      // 记录药水使用
+      achievementsStore.recordPotionUsed()
       break
     }
   }
@@ -211,10 +220,23 @@ const startBattle = async () => {
     addLog('system', `战斗胜利！获得 50 点经验值和 ${goldReward} 金币！`)
     gameStore.gainExp(50)
     gameStore.gainGold(goldReward)
+    
+    // 记录到成就系统
+    achievementsStore.recordVictory(goldReward, 50)
+    achievementsStore.recordWeaponCollected(player.value.inventory.length)
+    
+    // 检查新解锁的成就
+    const newUnlocked = achievementsStore.allAchievements.filter(a => a.unlocked && !a.unlockedAt)
+    newUnlocked.forEach(achievement => {
+      addLog('system', `🎉 解锁成就: ${achievement.name}!`)
+    })
   } else {
     addLog('system', '战斗失败... 下次再来吧！')
     // 恢复一点血量以免卡死
     currentHp.value = 1
+    
+    // 记录失败
+    achievementsStore.recordDefeat()
   }
 }
 
@@ -226,5 +248,8 @@ onMounted(() => {
   enemyHp.value = enemy.value.maxHp
   enemy.value.strength = 5 + player.value.level * 1.5
   enemy.value.agility = 3 + player.value.level * 0.8
+  
+  // 初始化玩家血量
+  currentHp.value = player.value.hp
 })
 </script>

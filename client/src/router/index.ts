@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../pages/Home.vue'
 import Battle from '../pages/Battle.vue'
 import Shop from '../pages/Shop.vue'
+import Achievements from '../pages/Achievements.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -20,6 +21,11 @@ const router = createRouter({
       path: '/shop',
       name: 'shop',
       component: Shop
+    },
+    {
+      path: '/achievements',
+      name: 'achievements',
+      component: Achievements
     }
   ]
 })
