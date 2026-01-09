@@ -33,5 +33,16 @@
 - [ ] 运行所有测试确保通过
 
 ## 部署
-- [ ] 保存checkpoint
+- [x] 保存checkpoint
 - [ ] 发布到生产环境
+
+
+## 登录系统改造
+- [x] 修改users表结构（添加username和password字段）
+- [x] 实现ID+密码登录的后端逻辑（simpleAuthRouter）
+- [x] 创建登录页面
+- [x] 创建注册页面
+- [x] 更新首页使用新的认证系统
+- [x] 保留OAuth兼容性
+- [x] 测试登录注册流程
+- [x] 保存checkpoint

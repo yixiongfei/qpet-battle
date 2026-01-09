@@ -292,8 +292,9 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
+    // Update last signed in time (OAuth compatibility)
     await db.upsertUser({
-      openId: user.openId,
+      openId: sessionUserId,
       lastSignedIn: signedInAt,
     });
 

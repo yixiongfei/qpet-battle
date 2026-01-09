@@ -109,7 +109,7 @@ export async function getFriends(userId: number) {
     .select({
       id: users.id,
       name: users.name,
-      email: users.email,
+      username: users.username,
       petId: pets.id,
       petName: pets.name,
       petLevel: pets.level,
@@ -140,7 +140,7 @@ export async function getPendingFriendRequests(userId: number) {
       id: friendships.id,
       userId: users.id,
       name: users.name,
-      email: users.email,
+      username: users.username,
       petId: pets.id,
       petName: pets.name,
       petLevel: pets.level,

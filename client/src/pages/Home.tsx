@@ -5,15 +5,55 @@ import { Progress } from "@/components/ui/progress";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const { user, loading, isAuthenticated, logout } = useAuth();
+  const { user: oauthUser, loading: oauthLoading, isAuthenticated: oauthAuthenticated, logout: oauthLogout } = useAuth();
   const [, navigate] = useLocation();
+  const [simpleAuthUser, setSimpleAuthUser] = useState<any>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // 检查简单认证
+  const simpleAuthQuery = trpc.simpleAuth.me.useQuery(undefined, {
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!oauthLoading && simpleAuthQuery.data !== undefined) {
+      setSimpleAuthUser(simpleAuthQuery.data);
+      setCheckingAuth(false);
+    }
+  }, [oauthLoading, simpleAuthQuery.data]);
+
+  // 优先使用简单认证，如果没有则使用OAuth
+  const user = simpleAuthUser || oauthUser;
+  const loading = checkingAuth || oauthLoading;
+  const isAuthenticated = !!simpleAuthUser || oauthAuthenticated;
 
   // 获取宠物和统计信息
-  const { data: pet } = trpc.pet.getPet.useQuery();
-  const { data: stats } = trpc.pet.getStats.useQuery();
-  const { data: onlineCount } = trpc.pet.getOnlinePlayerCount.useQuery();
+  const { data: pet } = trpc.pet.getPet.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: stats } = trpc.pet.getStats.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: onlineCount } = trpc.pet.getOnlinePlayerCount.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const logoutMutation = trpc.simpleAuth.logout.useMutation({
+    onSuccess: () => {
+      window.location.href = '/login';
+    },
+  });
+
+  const handleLogout = () => {
+    if (simpleAuthUser) {
+      logoutMutation.mutate();
+    } else {
+      oauthLogout();
+    }
+  };
 
   if (loading) {
     return (
@@ -35,13 +75,34 @@ export default function Home() {
           <p className="text-muted-foreground mb-8">
             养成你的宠物，与全球玩家对战，成为最强的宠物训练师！
           </p>
-          <Button
-            onClick={() => (window.location.href = getLoginUrl())}
-            size="lg"
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-          >
-            登录开始游戏
-          </Button>
+          <div className="space-y-3">
+            <Button
+              onClick={() => navigate('/login')}
+              size="lg"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+            >
+              登录开始游戏
+            </Button>
+            <Button
+              onClick={() => navigate('/register')}
+              size="lg"
+              variant="outline"
+              className="w-full"
+            >
+              注册新账号
+            </Button>
+            <div className="mt-4">
+              <p className="text-xs text-muted-foreground mb-2">或使用</p>
+              <Button
+                onClick={() => (window.location.href = getLoginUrl())}
+                size="sm"
+                variant="ghost"
+                className="w-full text-xs"
+              >
+                Manus OAuth 登录
+              </Button>
+            </div>
+          </div>
         </Card>
       </div>
     );
@@ -58,7 +119,7 @@ export default function Home() {
               <div className="text-2xl font-bold text-orange-600">{onlineCount || 0}</div>
               <div className="text-sm text-muted-foreground">在线玩家</div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => logout()}>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
               退出登录
             </Button>
           </div>

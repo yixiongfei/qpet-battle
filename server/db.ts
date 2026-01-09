@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import * as crypto from "crypto";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -18,75 +18,138 @@ export async function getDb() {
   return _db;
 }
 
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
+/**
+ * Hash password using SHA-256
+ */
+export function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
 
+/**
+ * Create a new user with username and password
+ */
+export async function createUser(username: string, password: string, name?: string): Promise<{ success: boolean; message: string; userId?: number }> {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
+    return { success: false, message: "Database not available" };
   }
 
   try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
+    // Check if username already exists
+    const existing = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    if (existing.length > 0) {
+      return { success: false, message: "Username already exists" };
     }
 
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
+    // Create new user
+    const hashedPassword = hashPassword(password);
+    const result = await db.insert(users).values({
+      username,
+      password: hashedPassword,
+      name: name || username,
+      role: "user",
+      lastSignedIn: new Date(),
     });
+
+    return {
+      success: true,
+      message: "User created successfully",
+      userId: Number(result[0].insertId),
+    };
   } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
+    console.error("[Database] Failed to create user:", error);
+    return { success: false, message: "Failed to create user" };
   }
 }
 
-export async function getUserByOpenId(openId: string) {
+/**
+ * Authenticate user with username and password
+ */
+export async function authenticateUser(username: string, password: string): Promise<{ success: boolean; message: string; user?: any }> {
+  const db = await getDb();
+  if (!db) {
+    return { success: false, message: "Database not available" };
+  }
+
+  try {
+    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    
+    if (result.length === 0) {
+      return { success: false, message: "User not found" };
+    }
+
+    const user = result[0];
+    const hashedPassword = hashPassword(password);
+
+    if (user.password !== hashedPassword) {
+      return { success: false, message: "Invalid password" };
+    }
+
+    // Update last signed in
+    await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
+
+    return {
+      success: true,
+      message: "Authentication successful",
+      user: {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        lastSignedIn: user.lastSignedIn,
+      },
+    };
+  } catch (error) {
+    console.error("[Database] Failed to authenticate user:", error);
+    return { success: false, message: "Authentication failed" };
+  }
+}
+
+/**
+ * Get user by ID
+ */
+export async function getUserById(userId: number) {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot get user: database not available");
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Get user by username
+ */
+export async function getUserByUsername(username: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * OAuth compatibility functions (for backward compatibility)
+ * These functions are kept to maintain compatibility with existing OAuth code
+ */
+export async function getUserByOpenId(openId: string) {
+  // OAuth users are not supported in the new system
+  // This function is kept for backward compatibility only
+  console.warn('[Database] getUserByOpenId called but OAuth is not the primary auth method');
+  return undefined;
+}
+
+export async function upsertUser(user: any): Promise<void> {
+  // OAuth users are not supported in the new system
+  // This function is kept for backward compatibility only
+  console.warn('[Database] upsertUser called but OAuth is not the primary auth method');
 }
 
 // TODO: add feature queries here as your schema grows.

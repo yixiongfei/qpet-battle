@@ -43,6 +43,13 @@
       "when": 1767942532714,
       "tag": "0005_fair_true_believers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1767943870589,
+      "tag": "0006_condemned_arclight",
+      "breakpoints": true
     }
   ]
 }

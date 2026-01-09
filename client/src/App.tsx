@@ -12,11 +12,15 @@ import TurnBasedBattle from "./pages/TurnBasedBattle";
 import LobbyUpgraded from "./pages/LobbyUpgraded";
 import Friends from "./pages/Friends";
 import PetCustomization from "./pages/PetCustomization";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
+      <Route path={"/login"} component={Login} />
+      <Route path={"/register"} component={Register} />
       <Route path={"/"} component={Home} />
       <Route path={"/pet-evolution"} component={PetEvolution} />
       <Route path={"/multiplayer-battle"} component={MultiplayerBattle} />

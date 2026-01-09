@@ -8,6 +8,7 @@ import { petCustomizationRouter } from "./petCustomizationRouter";
 import { turnBasedBattleRouter } from "./turnBasedBattleRouter";
 import { lobbyRouter } from "./lobbyRouter";
 import { evolutionRouter } from "./evolutionRouter";
+import { simpleAuthRouter } from "./simpleAuthRouter";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -22,6 +23,7 @@ export const appRouter = router({
       } as const;
     }),
   }),
+  simpleAuth: simpleAuthRouter,
 
   pet: petRouter,
   petCustomization: petCustomizationRouter,
