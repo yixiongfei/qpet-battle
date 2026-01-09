@@ -4,8 +4,7 @@ import { createUser, authenticateUser, getUserById } from './db';
 import { TRPCError } from '@trpc/server';
 
 /**
- * Simple authentication router for ID+password login
- * This coexists with the OAuth system
+ * Simple authentication router for username+password login
  */
 export const simpleAuthRouter = router({
   /**
@@ -101,7 +100,7 @@ export const simpleAuthRouter = router({
   }),
 
   /**
-   * Get current user from simple auth session
+   * Get current user from session
    */
   me: publicProcedure.query(async ({ ctx }) => {
     const cookies = ctx.req.headers.cookie || '';
@@ -137,7 +136,7 @@ export const simpleAuthRouter = router({
         lastSignedIn: user.lastSignedIn,
       };
     } catch (error) {
-      console.error('[SimpleAuth] Failed to parse session:', error);
+      console.error('[Auth] Failed to parse session:', error);
       return null;
     }
   }),

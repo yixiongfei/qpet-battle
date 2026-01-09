@@ -2,7 +2,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
@@ -91,17 +90,6 @@ export default function Home() {
             >
               注册新账号
             </Button>
-            <div className="mt-4">
-              <p className="text-xs text-muted-foreground mb-2">或使用</p>
-              <Button
-                onClick={() => (window.location.href = getLoginUrl())}
-                size="sm"
-                variant="ghost"
-                className="w-full text-xs"
-              >
-                Manus OAuth 登录
-              </Button>
-            </div>
           </div>
         </Card>
       </div>

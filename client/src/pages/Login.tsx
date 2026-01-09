@@ -102,18 +102,6 @@ export default function Login() {
             </button>
           </p>
         </div>
-
-        <div className="mt-4 text-center">
-          <p className="text-xs text-gray-500">
-            或使用{' '}
-            <a
-              href="/api/auth/login"
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Manus OAuth 登录
-            </a>
-          </p>
-        </div>
       </Card>
     </div>
   );

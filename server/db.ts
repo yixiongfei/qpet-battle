@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { users } from "../drizzle/schema";
 import * as crypto from "crypto";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -134,22 +134,3 @@ export async function getUserByUsername(username: string) {
   const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
-
-/**
- * OAuth compatibility functions (for backward compatibility)
- * These functions are kept to maintain compatibility with existing OAuth code
- */
-export async function getUserByOpenId(openId: string) {
-  // OAuth users are not supported in the new system
-  // This function is kept for backward compatibility only
-  console.warn('[Database] getUserByOpenId called but OAuth is not the primary auth method');
-  return undefined;
-}
-
-export async function upsertUser(user: any): Promise<void> {
-  // OAuth users are not supported in the new system
-  // This function is kept for backward compatibility only
-  console.warn('[Database] upsertUser called but OAuth is not the primary auth method');
-}
-
-// TODO: add feature queries here as your schema grows.
