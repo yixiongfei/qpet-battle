@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import PetEvolution from "./pages/PetEvolution";
 import MultiplayerBattle from "./pages/MultiplayerBattle";
 import RealtimeBattle from "./pages/RealtimeBattle";
+import Friends from "./pages/Friends";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -17,6 +18,7 @@ function Router() {
       <Route path={"/pet-evolution"} component={PetEvolution} />
       <Route path={"/multiplayer-battle"} component={MultiplayerBattle} />
       <Route path={"/realtime-battle"} component={RealtimeBattle} />
+      <Route path={"/friends"} component={Friends} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -115,3 +115,35 @@ export const onlinePlayers = mysqlTable("onlinePlayers", {
 
 export type OnlinePlayer = typeof onlinePlayers.$inferSelect;
 export type InsertOnlinePlayer = typeof onlinePlayers.$inferInsert;
+
+/**
+ * 好友关系表 - 存储玩家之间的好友关系
+ */
+export const friendships = mysqlTable("friendships", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  friendId: int("friendId").notNull(),
+  status: mysqlEnum("status", ["pending", "accepted", "blocked"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Friendship = typeof friendships.$inferSelect;
+export type InsertFriendship = typeof friendships.$inferInsert;
+
+/**
+ * 好友邀请表 - 存储好友邀请对战的记录
+ */
+export const friendInvites = mysqlTable("friendInvites", {
+  id: int("id").autoincrement().primaryKey(),
+  inviterId: int("inviterId").notNull(),
+  inviteeId: int("inviteeId").notNull(),
+  status: mysqlEnum("status", ["pending", "accepted", "declined", "expired"]).default("pending").notNull(),
+  matchId: varchar("matchId", { length: 255 }),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FriendInvite = typeof friendInvites.$inferSelect;
+export type InsertFriendInvite = typeof friendInvites.$inferInsert;
