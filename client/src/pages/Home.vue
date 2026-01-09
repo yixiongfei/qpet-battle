@@ -71,22 +71,51 @@
             <span class="w-2 h-6 bg-secondary mr-3 rounded-full"></span>
             背包
           </h3>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <div 
-              v-for="item in player.inventory" 
-              :key="item.id"
-              class="group relative bg-background border-2 border-border rounded-xl p-3 hover:border-primary cursor-pointer transition-all hover:-translate-y-1"
-              @click="gameStore.equipWeapon(item.id)"
-            >
-              <img :src="item.icon" class="w-full aspect-square object-contain mb-2" />
-              <div class="text-center font-bold text-sm">{{ item.name }}</div>
-              <div class="absolute top-2 right-2 w-3 h-3 bg-primary rounded-full" v-if="player.weapon?.id === item.id"></div>
+          <div class="space-y-4">
+            <!-- 武器栏 -->
+            <div>
+              <div class="text-sm font-bold text-muted-foreground mb-2">武器</div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div 
+                  v-for="item in player.inventory" 
+                  :key="item.id"
+                  class="group relative bg-background border-2 border-border rounded-xl p-3 hover:border-primary cursor-pointer transition-all hover:-translate-y-1"
+                  @click="gameStore.equipWeapon(item.id)"
+                >
+                  <img :src="item.icon" class="w-full aspect-square object-contain mb-2" />
+                  <div class="text-center font-bold text-sm">{{ item.name }}</div>
+                  <div class="absolute top-2 right-2 w-3 h-3 bg-primary rounded-full" v-if="player.weapon?.id === item.id"></div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 药水栏 -->
+            <div>
+              <div class="text-sm font-bold text-muted-foreground mb-2">药水</div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button 
+                  v-for="(count, potionId) in player.potions" 
+                  v-show="count > 0"
+                  :key="potionId"
+                  @click="usePotion(potionId)"
+                  class="pop-button px-2 py-2 text-sm bg-red-500 text-white hover:bg-red-600 relative"
+                >
+                  <span class="text-lg">🧪</span>
+                  <span class="absolute top-1 right-1 text-xs bg-black/50 rounded-full w-5 h-5 flex items-center justify-center">{{ count }}</span>
+                </button>
+              </div>
+              <div v-if="Object.keys(player.potions).length === 0 || Object.values(player.potions).every(v => v <= 0)" class="text-center py-4 text-muted-foreground text-sm">
+                暂无药水
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- 战斗入口 -->
-        <div class="flex justify-end mt-8">
+        <!-- 战斗和商店入口 -->
+        <div class="flex justify-end gap-4 mt-8">
+          <button @click="router.push('/shop')" class="pop-button text-xl px-8 py-4 bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg transform hover:scale-105 transition-all">
+            进入商店
+          </button>
           <button @click="router.push('/battle')" class="pop-button text-xl px-12 py-4 bg-gradient-to-r from-primary to-red-500 hover:from-primary/90 hover:to-red-600 text-white shadow-lg transform hover:scale-105 transition-all">
             寻找对手
           </button>
@@ -104,4 +133,10 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const gameStore = useGameStore()
 const { player } = storeToRefs(gameStore)
+
+const usePotion = (potionId: string) => {
+  if (gameStore.usePotion(potionId)) {
+    // 药水使用成功
+  }
+}
 </script>

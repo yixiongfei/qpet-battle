@@ -60,13 +60,26 @@
         </div>
 
         <!-- 底部操作栏 -->
-        <div class="flex justify-center gap-4">
+        <div class="flex justify-center gap-4 flex-wrap">
           <button 
-            v-if="!isBattleStarted"
+            v-if="!isBattleStarted && currentHp > 0"
             @click="startBattle"
             class="pop-button text-2xl px-16 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white shadow-xl animate-bounce"
           >
             开始战斗！
+          </button>
+          
+          <button 
+            v-if="!isBattleStarted && currentHp <= 0 && isBattleEnded"
+            @click="useHealthPotion"
+            :disabled="!hasHealthPotion"
+            class="pop-button text-xl px-8 py-3"
+            :class="{
+              'bg-red-500 text-white hover:bg-red-600': hasHealthPotion,
+              'bg-muted text-muted-foreground cursor-not-allowed': !hasHealthPotion
+            }"
+          >
+            {{ hasHealthPotion ? '使用药水恢复' : '无药水可用' }}
           </button>
           
           <button 
@@ -83,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { storeToRefs } from 'pinia'
@@ -105,6 +118,23 @@ const enemy = ref({
   strength: 8,
   agility: 4
 })
+
+const hasHealthPotion = computed(() => {
+  return Object.values(player.value.potions).some(count => count > 0)
+})
+
+const useHealthPotion = () => {
+  // 优先使用小红瓶
+  const potions = ['p1', 'p2', 'p3']
+  for (const potionId of potions) {
+    if (gameStore.usePotion(potionId)) {
+      const potion = gameStore.getShopPotions().find(p => p.id === potionId)
+      currentHp.value = Math.min(player.value.maxHp, currentHp.value + (potion?.healAmount || 0))
+      addLog('system', `使用了 ${potion?.name}，恢复了 ${potion?.healAmount} 点生命值！`)
+      break
+    }
+  }
+}
 
 interface BattleLog {
   type: 'player' | 'enemy' | 'system'
@@ -177,8 +207,10 @@ const startBattle = async () => {
   
   isBattleEnded.value = true
   if (currentHp.value > 0) {
-    addLog('system', '战斗胜利！获得 50 点经验值！')
+    const goldReward = 50 + player.value.level * 10
+    addLog('system', `战斗胜利！获得 50 点经验值和 ${goldReward} 金币！`)
     gameStore.gainExp(50)
+    gameStore.gainGold(goldReward)
   } else {
     addLog('system', '战斗失败... 下次再来吧！')
     // 恢复一点血量以免卡死
