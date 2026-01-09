@@ -1,14 +1,17 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { Loader2, Upload, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { RACE_CONFIG } from '@shared/raceSystem';
 
 interface PetInfo {
   id: number;
   name: string;
+  race: 'human' | 'beast' | 'hybrid';
   level: number;
   hp: number;
   maxHp: number;
@@ -17,7 +20,7 @@ interface PetInfo {
   strength: number;
   agility: number;
   evolution: number;
-  imageUrl?: string;
+  imageUrl?: string | null;
 }
 
 export default function PetCustomization() {
@@ -28,7 +31,7 @@ export default function PetCustomization() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 获取宠物信息
-  const getPetInfoMutation = trpc.petCustomization.getPetInfo.useQuery(
+  const getPetInfoQuery = trpc.petCustomization.getPetInfo.useQuery(
     { petId: petId || 0 },
     { enabled: !!petId }
   );
@@ -54,7 +57,7 @@ export default function PetCustomization() {
     onSuccess: (data) => {
       if (data.success && 'imageUrl' in data) {
         toast.success(data.message);
-        if (petInfo && 'imageUrl' in data) {
+        if (petInfo) {
           setPetInfo({ ...petInfo, imageUrl: data.imageUrl });
         }
       } else {
@@ -62,6 +65,13 @@ export default function PetCustomization() {
       }
     },
   });
+
+  // 同步查询结果到本地状态
+  useEffect(() => {
+    if (getPetInfoQuery.data?.data) {
+      setPetInfo(getPetInfoQuery.data.data);
+    }
+  }, [getPetInfoQuery.data]);
 
   const handleRenamePet = () => {
     if (!petId || !newName.trim()) {
@@ -128,7 +138,7 @@ export default function PetCustomization() {
     );
   }
 
-  if (getPetInfoMutation.isLoading) {
+  if (getPetInfoQuery.isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 p-4 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -136,34 +146,35 @@ export default function PetCustomization() {
     );
   }
 
-  const pet = getPetInfoMutation.data?.data || petInfo;
+  const pet = petInfo;
+  const raceConfig = pet ? RACE_CONFIG[pet.race] : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">宠物自定义</h1>
 
         {/* 宠物头像和基本信息 */}
         <Card className="p-6 mb-6">
-          <div className="flex gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* 宠物头像 */}
-            <div className="flex-shrink-0">
+            <div className="flex flex-col items-center">
               {pet?.imageUrl ? (
                 <img
                   src={pet.imageUrl}
                   alt={pet.name}
-                  className="w-48 h-48 rounded-lg object-cover border-4 border-blue-200"
+                  className="w-48 h-48 rounded-lg object-cover border-4 border-blue-200 mb-4"
                 />
               ) : (
-                <div className="w-48 h-48 rounded-lg bg-gray-200 flex items-center justify-center border-4 border-blue-200">
-                  <span className="text-gray-400 text-center">
+                <div className="w-48 h-48 rounded-lg bg-gray-200 flex items-center justify-center border-4 border-blue-200 mb-4">
+                  <span className="text-gray-400 text-center text-sm">
                     点击上传宠物图片
                   </span>
                 </div>
               )}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-4 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2"
+                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2"
                 disabled={uploadImageMutation.isPending}
               >
                 {uploadImageMutation.isPending ? (
@@ -183,7 +194,8 @@ export default function PetCustomization() {
             </div>
 
             {/* 宠物信息 */}
-            <div className="flex-1">
+            <div className="md:col-span-2">
+              {/* 宠物名字 */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-2">
                   <h2 className="text-2xl font-bold">{pet?.name}</h2>
@@ -204,23 +216,20 @@ export default function PetCustomization() {
                     <Input
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      placeholder="输入新名字"
+                      placeholder="输入新的宠物名字"
                       className="flex-1"
                     />
                     <Button
                       onClick={handleRenamePet}
                       disabled={renameMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700"
+                      size="sm"
                     >
-                      {renameMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        '保存'
-                      )}
+                      {renameMutation.isPending ? '保存中...' : '保存'}
                     </Button>
                     <Button
                       onClick={() => setIsEditingName(false)}
                       variant="outline"
+                      size="sm"
                     >
                       取消
                     </Button>
@@ -228,70 +237,54 @@ export default function PetCustomization() {
                 )}
               </div>
 
-              {/* 属性信息 */}
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">等级</p>
-                    <p className="text-xl font-bold text-blue-600">{pet?.level}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">进化阶段</p>
-                    <p className="text-xl font-bold text-purple-600">
-                      {pet?.evolution}
-                    </p>
-                  </div>
+              {/* 基本信息 */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="text-xs text-muted-foreground">等级</div>
+                  <div className="text-2xl font-bold text-blue-600">{pet?.level}</div>
                 </div>
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <div className="text-xs text-muted-foreground">种族</div>
+                  <div className="text-lg font-bold text-purple-600">{raceConfig?.name}</div>
+                </div>
+                <div className="bg-orange-50 p-3 rounded-lg">
+                  <div className="text-xs text-muted-foreground">进化阶段</div>
+                  <div className="text-2xl font-bold text-orange-600">{pet?.evolution}</div>
+                </div>
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <div className="text-xs text-muted-foreground">种族特性</div>
+                  <div className="text-xs font-bold text-green-600">{raceConfig?.description}</div>
+                </div>
+              </div>
 
-                {/* 血量条 */}
+              {/* 属性条 */}
+              <div className="space-y-3">
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-semibold">血量</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-xs font-medium">生命值</span>
+                    <span className="text-xs font-bold text-red-600">
                       {pet?.hp}/{pet?.maxHp}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-red-500 h-2 rounded-full"
-                      style={{
-                        width: `${((pet?.hp || 0) / (pet?.maxHp || 1)) * 100}%`,
-                      }}
-                    />
-                  </div>
+                  <Progress value={((pet?.hp || 0) / (pet?.maxHp || 100)) * 100} className="h-2" />
                 </div>
-
-                {/* 蓝量条 */}
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-semibold">蓝量</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-xs font-medium">蓝量</span>
+                    <span className="text-xs font-bold text-blue-600">
                       {pet?.mp}/{pet?.maxMp}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full"
-                      style={{
-                        width: `${((pet?.mp || 0) / (pet?.maxMp || 1)) * 100}%`,
-                      }}
-                    />
-                  </div>
+                  <Progress value={((pet?.mp || 0) / (pet?.maxMp || 100)) * 100} className="h-2" />
                 </div>
-
-                {/* 属性 */}
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div>
-                    <p className="text-sm text-gray-600">力量</p>
-                    <p className="text-lg font-bold text-red-600">
-                      {pet?.strength}
-                    </p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="bg-orange-50 p-2 rounded">
+                    <div className="text-xs text-muted-foreground">力量</div>
+                    <div className="font-bold text-orange-600">{pet?.strength}</div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">敏捷</p>
-                    <p className="text-lg font-bold text-yellow-600">
-                      {pet?.agility}
-                    </p>
+                  <div className="bg-green-50 p-2 rounded">
+                    <div className="text-xs text-muted-foreground">敏捷</div>
+                    <div className="font-bold text-green-600">{pet?.agility}</div>
                   </div>
                 </div>
               </div>
@@ -299,16 +292,28 @@ export default function PetCustomization() {
           </div>
         </Card>
 
-        {/* 图片上传说明 */}
-        <Card className="p-4 bg-blue-50 border-blue-200">
-          <h3 className="font-semibold text-blue-900 mb-2">上传说明</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>✓ 支持 JPG 和 PNG 格式</li>
-            <li>✓ 图片将自动裁剪为 256x256 像素</li>
-            <li>✓ 文件大小限制为 5MB</li>
-            <li>✓ 建议上传正方形图片以获得最佳效果</li>
-          </ul>
-        </Card>
+        {/* 种族信息 */}
+        {raceConfig && (
+          <Card className="p-6">
+            <h3 className="text-lg font-bold mb-4">种族信息</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">特点</p>
+                <p className="text-sm">{raceConfig.description}</p>
+              </div>
+              <div className="space-y-2">
+                <div className="text-sm">
+                  <span className="text-muted-foreground">基础血量：</span>
+                  <span className="font-bold">{raceConfig.hpBase} + {raceConfig.hpPerLevel}/级</span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-muted-foreground">基础蓝量：</span>
+                  <span className="font-bold">{raceConfig.mpBase} + {raceConfig.mpPerLevel}/级</span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

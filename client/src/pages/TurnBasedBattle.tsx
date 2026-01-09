@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, Zap, Shield, Heart } from 'lucide-react';
 import { toast } from 'sonner';
+import { RACE_CONFIG } from '@shared/raceSystem';
 import type { BattleState } from '../../../server/turnBasedBattle';
 
 interface Skill {
@@ -21,6 +22,14 @@ interface Skill {
   createdAt?: Date;
 }
 
+interface PetInfo {
+  id: number;
+  name: string;
+  race: 'human' | 'beast' | 'hybrid';
+  level: number;
+  imageUrl?: string | null;
+}
+
 export default function TurnBasedBattle() {
   const [location, setLocation] = useLocation();
   const [battleId, setBattleId] = useState<string | null>(null);
@@ -28,10 +37,24 @@ export default function TurnBasedBattle() {
   const [playerSkills, setPlayerSkills] = useState<Skill[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<number | null>(null);
+  const [playerPetInfo, setPlayerPetInfo] = useState<PetInfo | null>(null);
+  const [opponentPetInfo, setOpponentPetInfo] = useState<PetInfo | null>(null);
 
   // 获取可用技能
   const getSkillsQuery = trpc.turnBasedBattle.getAvailableSkills.useQuery(
     { petId: 1 }, // 这里应该从路由参数获取
+    { enabled: !!battleId }
+  );
+
+  // 获取玩家宠物信息
+  const playerPetQuery = trpc.petCustomization.getPetInfo.useQuery(
+    { petId: 1 },
+    { enabled: !!battleId }
+  );
+
+  // 获取对手宠物信息
+  const opponentPetQuery = trpc.petCustomization.getPetInfo.useQuery(
+    { petId: 2 },
     { enabled: !!battleId }
   );
 
@@ -97,6 +120,19 @@ export default function TurnBasedBattle() {
     }
   }, [getSkillsQuery.data]);
 
+  // 加载宠物信息
+  useEffect(() => {
+    if (playerPetQuery.data?.data) {
+      setPlayerPetInfo(playerPetQuery.data.data as PetInfo);
+    }
+  }, [playerPetQuery.data]);
+
+  useEffect(() => {
+    if (opponentPetQuery.data?.data) {
+      setOpponentPetInfo(opponentPetQuery.data.data as PetInfo);
+    }
+  }, [opponentPetQuery.data]);
+
   const handleSkillClick = (skillId: number) => {
     if (!battleId || isExecuting) return;
     setIsExecuting(true);
@@ -144,9 +180,24 @@ export default function TurnBasedBattle() {
           <div className="grid grid-cols-2 gap-8 mb-6">
             {/* 玩家宠物 */}
             <div className="text-center">
-              <h2 className="text-xl font-bold mb-4">您的宠物</h2>
-              <div className="bg-blue-100 rounded-lg p-4 mb-4 min-h-32 flex items-center justify-center">
-                <div className="text-6xl">🐧</div>
+              <div className="mb-2">
+                <h2 className="text-xl font-bold">{playerPetInfo?.name || '宠物'}</h2>
+                {playerPetInfo && (
+                  <p className="text-sm text-gray-600">
+                    {RACE_CONFIG[playerPetInfo.race]?.name} | Lv.{playerPetInfo.level}
+                  </p>
+                )}
+              </div>
+              <div className="bg-blue-100 rounded-lg p-4 mb-4 min-h-48 flex items-center justify-center overflow-hidden">
+                {playerPetInfo?.imageUrl ? (
+                  <img
+                    src={playerPetInfo.imageUrl}
+                    alt={playerPetInfo.name}
+                    className="w-full h-full object-cover rounded"
+                  />
+                ) : (
+                  <div className="text-6xl">🐧</div>
+                )}
               </div>
 
               {/* 血量条 */}
@@ -184,9 +235,24 @@ export default function TurnBasedBattle() {
 
             {/* 对手宠物 */}
             <div className="text-center">
-              <h2 className="text-xl font-bold mb-4">对手宠物</h2>
-              <div className="bg-purple-100 rounded-lg p-4 mb-4 min-h-32 flex items-center justify-center">
-                <div className="text-6xl">🐢</div>
+              <div className="mb-2">
+                <h2 className="text-xl font-bold">{opponentPetInfo?.name || '对手宠物'}</h2>
+                {opponentPetInfo && (
+                  <p className="text-sm text-gray-600">
+                    {RACE_CONFIG[opponentPetInfo.race]?.name} | Lv.{opponentPetInfo.level}
+                  </p>
+                )}
+              </div>
+              <div className="bg-purple-100 rounded-lg p-4 mb-4 min-h-48 flex items-center justify-center overflow-hidden">
+                {opponentPetInfo?.imageUrl ? (
+                  <img
+                    src={opponentPetInfo.imageUrl}
+                    alt={opponentPetInfo.name}
+                    className="w-full h-full object-cover rounded"
+                  />
+                ) : (
+                  <div className="text-6xl">🐢</div>
+                )}
               </div>
 
               {/* 血量条 */}

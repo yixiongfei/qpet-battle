@@ -1,0 +1,1 @@
+ALTER TABLE `pets` ADD `race` enum('human','beast','hybrid') DEFAULT 'human' NOT NULL;

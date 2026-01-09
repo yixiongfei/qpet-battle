@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Loader2 } from 'lucide-react';
+import { RACE_CONFIG } from '@shared/raceSystem';
 import type { WSMessage, BattleActionPayload, BattleEndPayload } from '@shared/websocket';
 
 interface BattleLogEntry {
@@ -29,6 +30,21 @@ export default function RealtimeBattle() {
   const [opponentHp, setOpponentHp] = useState(0);
   const [battleLog, setBattleLog] = useState<BattleLogEntry[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
+  const [playerPetInfo, setPlayerPetInfo] = useState<any>(null);
+  const [opponentPetInfo, setOpponentPetInfo] = useState<any>(null);
+
+  // 获取玩家宠物信息
+  const playerPetInfoQuery = trpc.petCustomization.getPetInfo.useQuery(
+    { petId: petQuery.data?.id || 0 },
+    { enabled: !!petQuery.data?.id }
+  );
+
+  // 同步玩家宠物信息
+  useEffect(() => {
+    if (playerPetInfoQuery.data?.data) {
+      setPlayerPetInfo(playerPetInfoQuery.data.data);
+    }
+  }, [playerPetInfoQuery.data]);
 
   const { isConnected, connect, send } = useWebSocket({
     onMessage: (message: WSMessage) => {
@@ -178,9 +194,19 @@ export default function RealtimeBattle() {
             <Card className="p-6">
               <h2 className="text-xl font-bold mb-4">你的宠物</h2>
               <div className="text-center mb-4">
-                <div className="text-4xl mb-2">🐧</div>
+                {playerPetInfo?.imageUrl ? (
+                  <img
+                    src={playerPetInfo.imageUrl}
+                    alt={pet.name}
+                    className="w-full h-48 object-cover rounded-lg mb-4"
+                  />
+                ) : (
+                  <div className="text-4xl mb-2">🐧</div>
+                )}
                 <h3 className="text-2xl font-bold">{pet.name}</h3>
-                <p className="text-gray-600">等级 {pet.level}</p>
+                {playerPetInfo && playerPetInfo.race && (
+                  <p className="text-gray-600">{RACE_CONFIG[playerPetInfo.race as 'human' | 'beast' | 'hybrid']?.name} | 等级 {pet.level}</p>
+                )}
               </div>
               <div className="space-y-2 mb-4">
                 <div>
@@ -248,7 +274,18 @@ export default function RealtimeBattle() {
               {/* 玩家 */}
               <Card className="p-6 text-center">
                 <h3 className="text-xl font-bold mb-4">{pet.name}</h3>
-                <div className="text-5xl mb-4">🐧</div>
+                {playerPetInfo?.imageUrl ? (
+                  <img
+                    src={playerPetInfo.imageUrl}
+                    alt={pet.name}
+                    className="w-full h-40 object-cover rounded-lg mb-4"
+                  />
+                ) : (
+                  <div className="text-5xl mb-4">🐧</div>
+                )}
+                {playerPetInfo && playerPetInfo.race && (
+                  <p className="text-sm text-gray-600 mb-2">{RACE_CONFIG[playerPetInfo.race as 'human' | 'beast' | 'hybrid']?.name}</p>
+                )}
                 <div className="space-y-2">
                   <div>
                     <p className="text-sm text-gray-600">生命值</p>
@@ -261,7 +298,18 @@ export default function RealtimeBattle() {
               {/* 对手 */}
               <Card className="p-6 text-center">
                 <h3 className="text-xl font-bold mb-4">{opponent?.petName}</h3>
-                <div className="text-5xl mb-4">🐧</div>
+                {opponent?.petImageUrl ? (
+                  <img
+                    src={opponent.petImageUrl}
+                    alt={opponent?.petName}
+                    className="w-full h-40 object-cover rounded-lg mb-4"
+                  />
+                ) : (
+                  <div className="text-5xl mb-4">🐧</div>
+                )}
+                {opponent && (
+                  <p className="text-sm text-gray-600 mb-2">等级 {opponent.level}</p>
+                )}
                 <div className="space-y-2">
                   <div>
                     <p className="text-sm text-gray-600">生命值</p>

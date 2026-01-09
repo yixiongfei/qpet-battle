@@ -32,6 +32,7 @@ export const pets = mysqlTable("pets", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   name: varchar("name", { length: 64 }).notNull(),
+  race: mysqlEnum("race", ["human", "beast", "hybrid"]).default("human").notNull(),
   level: int("level").default(1).notNull(),
   exp: int("exp").default(0).notNull(),
   maxExp: int("maxExp").default(100).notNull(),
