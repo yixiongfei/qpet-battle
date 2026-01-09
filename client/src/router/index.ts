@@ -3,6 +3,7 @@ import Home from '../pages/Home.vue'
 import Battle from '../pages/Battle.vue'
 import Shop from '../pages/Shop.vue'
 import Achievements from '../pages/Achievements.vue'
+import Settings from '../pages/Settings.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: '/achievements',
       name: 'achievements',
       component: Achievements
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: Settings
     }
   ]
 })

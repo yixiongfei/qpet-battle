@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
+import * as storageService from '@/services/storage'
 
 export interface Weapon {
   id: string
@@ -108,7 +109,10 @@ const shopPotions: Potion[] = [
 ]
 
 export const useGameStore = defineStore('game', () => {
-  const player = ref<Player>({
+  // 优先从 localStorage 加载数据，否则使用默认值
+  const savedPlayerData = storageService.loadPlayerData()
+  
+  const player = ref<Player>(savedPlayerData || {
     name: 'Q宠大侠',
     level: 1,
     exp: 0,
@@ -129,10 +133,20 @@ export const useGameStore = defineStore('game', () => {
     skills: []
   })
 
+  // 自动保存数据到 localStorage
+  let saveTimer: NodeJS.Timeout | null = null
+  const autoSave = () => {
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      storageService.savePlayerData(player.value)
+    }, 1000)
+  }
+
   const equipWeapon = (weaponId: string) => {
     const weapon = player.value.inventory.find(w => w.id === weaponId)
     if (weapon) {
       player.value.weapon = weapon
+      autoSave()
     }
   }
 
@@ -141,6 +155,7 @@ export const useGameStore = defineStore('game', () => {
     if (player.value.exp >= player.value.maxExp) {
       levelUp()
     }
+    autoSave()
   }
 
   const levelUp = () => {
@@ -155,6 +170,7 @@ export const useGameStore = defineStore('game', () => {
 
   const gainGold = (amount: number) => {
     player.value.gold += amount
+    autoSave()
   }
 
   const buyWeapon = (weaponId: string, price: number): boolean => {
@@ -171,6 +187,7 @@ export const useGameStore = defineStore('game', () => {
     
     player.value.gold -= price
     player.value.inventory.push(weapon)
+    autoSave()
     return true
   }
 
@@ -181,6 +198,7 @@ export const useGameStore = defineStore('game', () => {
     
     player.value.gold -= price
     player.value.potions[potionId] = (player.value.potions[potionId] || 0) + 1
+    autoSave()
     return true
   }
 
@@ -195,12 +213,26 @@ export const useGameStore = defineStore('game', () => {
     const healAmount = Math.min(potion.healAmount, player.value.maxHp - player.value.hp)
     player.value.hp += healAmount
     player.value.potions[potionId]--
+    autoSave()
     return true
   }
 
   const getShopWeapons = () => shopWeapons
   const getShopPotions = () => shopPotions
   const getOwnedWeaponIds = () => player.value.inventory.map(w => w.id)
+
+  // 手动保存数据
+  const saveData = () => {
+    storageService.savePlayerData(player.value)
+  }
+
+  // 从 localStorage 加载数据
+  const loadData = () => {
+    const savedData = storageService.loadPlayerData()
+    if (savedData) {
+      Object.assign(player.value, savedData)
+    }
+  }
 
   return {
     player,
@@ -212,6 +244,8 @@ export const useGameStore = defineStore('game', () => {
     usePotion,
     getShopWeapons,
     getShopPotions,
-    getOwnedWeaponIds
+    getOwnedWeaponIds,
+    saveData,
+    loadData
   }
 })

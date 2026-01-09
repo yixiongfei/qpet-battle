@@ -117,8 +117,11 @@
           </div>
         </div>
 
-        <!-- 战斗、商店和成就入口 -->
+        <!-- 战斗、商店、成就和设置入口 -->
         <div class="flex justify-end gap-4 mt-8 flex-wrap">
+          <button @click="router.push('/settings')" class="pop-button text-xl px-6 py-4 bg-gray-500 hover:bg-gray-600 text-white shadow-lg transform hover:scale-105 transition-all">
+            设置
+          </button>
           <button @click="router.push('/achievements')" class="pop-button text-xl px-6 py-4 bg-purple-500 hover:bg-purple-600 text-white shadow-lg transform hover:scale-105 transition-all">
             成就与排行榜
           </button>

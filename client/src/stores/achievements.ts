@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import * as storageService from '@/services/storage'
 
 export interface Achievement {
   id: string
@@ -23,8 +24,11 @@ export interface PlayerStats {
 }
 
 export const useAchievementsStore = defineStore('achievements', () => {
+  // 从 localStorage 加载已保存的数据
+  const savedAchievementsData = storageService.loadAchievementsData()
+  
   // 所有可能的成就定义
-  const allAchievements = ref<Achievement[]>([
+  const allAchievements = ref<Achievement[]>(savedAchievementsData?.allAchievements || [
     {
       id: 'first_victory',
       name: '初出茅庐',
@@ -107,7 +111,7 @@ export const useAchievementsStore = defineStore('achievements', () => {
     }
   ])
 
-  const playerStats = ref<PlayerStats>({
+  const playerStats = ref<PlayerStats>(savedAchievementsData?.playerStats || {
     totalBattles: 0,
     totalWins: 0,
     currentWinStreak: 0,
@@ -119,13 +123,26 @@ export const useAchievementsStore = defineStore('achievements', () => {
   })
 
   // 排行榜数据（模拟多个玩家）
-  const leaderboard = ref([
+  const leaderboard = ref(savedAchievementsData?.leaderboard || [
     { rank: 1, name: '乐斗之王', maxWinStreak: 15, totalGold: 8500 },
     { rank: 2, name: '连胜小王子', maxWinStreak: 12, totalGold: 6200 },
     { rank: 3, name: '金币猎人', maxWinStreak: 8, totalGold: 7800 },
     { rank: 4, name: '武器大师', maxWinStreak: 10, totalGold: 5600 },
     { rank: 5, name: '菜菜企鹅', maxWinStreak: 3, totalGold: 1200 }
   ])
+
+  // 自动保存数据到 localStorage
+  let saveTimer: NodeJS.Timeout | null = null
+  const autoSave = () => {
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      storageService.saveAchievementsData({
+        allAchievements: allAchievements.value,
+        playerStats: playerStats.value,
+        leaderboard: leaderboard.value
+      })
+    }, 1000)
+  }
 
   // 检查并解锁成就
   const checkAchievements = () => {
@@ -175,24 +192,28 @@ export const useAchievementsStore = defineStore('achievements', () => {
     }
 
     checkAchievements()
+    autoSave()
   }
 
   // 记录战斗失败
   const recordDefeat = () => {
     playerStats.value.totalBattles++
     playerStats.value.currentWinStreak = 0
+    autoSave()
   }
 
   // 记录药水使用
   const recordPotionUsed = () => {
     playerStats.value.totalPotionsUsed++
     checkAchievements()
+    autoSave()
   }
 
   // 记录武器收集
   const recordWeaponCollected = (count: number) => {
     playerStats.value.weaponsCollected = count
     checkAchievements()
+    autoSave()
   }
 
   // 获取已解锁的成就
@@ -233,7 +254,7 @@ export const useAchievementsStore = defineStore('achievements', () => {
     }
 
     // 重新排名
-    leaderboard.value.forEach((entry, index) => {
+    leaderboard.value.forEach((entry: any, index: number) => {
       entry.rank = index + 1
     })
 
@@ -241,6 +262,7 @@ export const useAchievementsStore = defineStore('achievements', () => {
     if (leaderboard.value.length > 10) {
       leaderboard.value = leaderboard.value.slice(0, 10)
     }
+    autoSave()
   }
 
   return {
@@ -254,6 +276,7 @@ export const useAchievementsStore = defineStore('achievements', () => {
     recordPotionUsed,
     recordWeaponCollected,
     updateLeaderboard,
-    checkAchievements
+    checkAchievements,
+    autoSave
   }
 })
