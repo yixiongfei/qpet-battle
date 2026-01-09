@@ -116,25 +116,47 @@ export default function Home() {
           <div className="lg:col-span-2 space-y-6">
             {/* 主要功能 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-6 hover:shadow-lg transition cursor-pointer" onClick={() => navigate("/multiplayer-battle")}>
-                <div className="text-4xl mb-3">⚔️</div>
-                <h3 className="text-xl font-bold mb-2">多人对战</h3>
+              <Card className="p-6 hover:shadow-lg transition cursor-pointer" onClick={() => navigate("/lobby")}>
+                <div className="text-4xl mb-3">🏛️</div>
+                <h3 className="text-xl font-bold mb-2">大厅</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  与全球玩家实时对战，赚取金币和经验
+                  查看在线玩家，邀请对战，体验回合制战斗
                 </p>
                 <Button className="w-full" variant="default">
-                  开始对战
+                  进入大厅
                 </Button>
               </Card>
 
-              <Card className="p-6 hover:shadow-lg transition cursor-pointer" onClick={() => navigate("/pet-evolution")}>
-                <div className="text-4xl mb-3">✨</div>
-                <h3 className="text-xl font-bold mb-2">宠物进化</h3>
+              <Card className="p-6 hover:shadow-lg transition cursor-pointer" onClick={() => navigate("/turn-based-battle")}>
+                <div className="text-4xl mb-3">⚔️</div>
+                <h3 className="text-xl font-bold mb-2">回合制战斗</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  升级宠物，学习新技能，解锁更强形态
+                  手动选择技能，体验策略性的回合制对战
                 </p>
                 <Button className="w-full" variant="default">
-                  查看进化
+                  开始战斗
+                </Button>
+              </Card>
+
+              <Card className="p-6 hover:shadow-lg transition cursor-pointer" onClick={() => navigate("/pet-customization")}>
+                <div className="text-4xl mb-3">🎨</div>
+                <h3 className="text-xl font-bold mb-2">宠物自定义</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  修改宠物名字，上传宠物图片，打造独特的宠物
+                </p>
+                <Button className="w-full" variant="default">
+                  自定义宠物
+                </Button>
+              </Card>
+
+              <Card className="p-6 hover:shadow-lg transition cursor-pointer" onClick={() => navigate("/friends")}>
+                <div className="text-4xl mb-3">👥</div>
+                <h3 className="text-xl font-bold mb-2">好友系统</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  添加好友，邀请好友对战，建立你的社交圈
+                </p>
+                <Button className="w-full" variant="default">
+                  管理好友
                 </Button>
               </Card>
             </div>
@@ -168,7 +190,7 @@ export default function Home() {
             <Card className="p-6 bg-gradient-to-r from-purple-50 to-pink-50">
               <h3 className="text-lg font-bold mb-2">欢迎回来，{user?.name}！</h3>
               <p className="text-sm text-muted-foreground">
-                准备好与其他玩家对战了吗？选择上方的功能开始你的冒险之旅！
+                选择上方的功能开始你的冒险之旅！在大厅中与其他玩家对战，或者自定义你的宠物。
               </p>
             </Card>
           </div>
