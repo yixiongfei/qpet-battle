@@ -152,3 +152,36 @@ export const friendInvites = mysqlTable("friendInvites", {
 
 export type FriendInvite = typeof friendInvites.$inferSelect;
 export type InsertFriendInvite = typeof friendInvites.$inferInsert;
+
+/**
+ * 玩家在线状态表 - 追踪玩家的在线状态和当前活动
+ */
+export const playerStatus = mysqlTable("playerStatus", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  isOnline: int("isOnline").default(0).notNull(), // 0 = offline, 1 = online
+  currentStatus: mysqlEnum("currentStatus", ["idle", "matching", "inBattle", "offline"]).default("offline").notNull(),
+  lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PlayerStatus = typeof playerStatus.$inferSelect;
+export type InsertPlayerStatus = typeof playerStatus.$inferInsert;
+
+/**
+ * 对战邀请表 - 存储玩家之间的对战邀请
+ */
+export const battleInvites = mysqlTable("battleInvites", {
+  id: int("id").autoincrement().primaryKey(),
+  inviterId: int("inviterId").notNull(),
+  inviteeId: int("inviteeId").notNull(),
+  status: mysqlEnum("status", ["pending", "accepted", "declined", "expired"]).default("pending").notNull(),
+  battleId: varchar("battleId", { length: 255 }),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BattleInvite = typeof battleInvites.$inferSelect;
+export type InsertBattleInvite = typeof battleInvites.$inferInsert;

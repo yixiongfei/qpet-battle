@@ -9,6 +9,7 @@ import PetEvolution from "./pages/PetEvolution";
 import MultiplayerBattle from "./pages/MultiplayerBattle";
 import RealtimeBattle from "./pages/RealtimeBattle";
 import TurnBasedBattle from "./pages/TurnBasedBattle";
+import LobbyUpgraded from "./pages/LobbyUpgraded";
 import Friends from "./pages/Friends";
 import PetCustomization from "./pages/PetCustomization";
 
@@ -21,6 +22,7 @@ function Router() {
       <Route path={"/multiplayer-battle"} component={MultiplayerBattle} />
       <Route path={"/realtime-battle"} component={RealtimeBattle} />
       <Route path={"/turn-based-battle"} component={TurnBasedBattle} />
+      <Route path={"/lobby"} component={LobbyUpgraded} />
       <Route path={"/friends"} component={Friends} />
       <Route path={"/pet-customization"} component={PetCustomization} />
       <Route path={"/404"} component={NotFound} />
